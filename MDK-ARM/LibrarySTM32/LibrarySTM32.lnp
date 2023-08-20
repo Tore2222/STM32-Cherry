@@ -1,0 +1,26 @@
+--cpu Cortex-M3
+"librarystm32\startup_stm32f103xb.o"
+"librarystm32\main.o"
+"librarystm32\stm32f1xx_it.o"
+"librarystm32\stm32f1xx_hal_msp.o"
+"librarystm32\stm32f1xx_hal_gpio_ex.o"
+"librarystm32\stm32f1xx_hal_adc.o"
+"librarystm32\stm32f1xx_hal_adc_ex.o"
+"librarystm32\stm32f1xx_hal.o"
+"librarystm32\stm32f1xx_hal_rcc.o"
+"librarystm32\stm32f1xx_hal_rcc_ex.o"
+"librarystm32\stm32f1xx_hal_gpio.o"
+"librarystm32\stm32f1xx_hal_dma.o"
+"librarystm32\stm32f1xx_hal_cortex.o"
+"librarystm32\stm32f1xx_hal_pwr.o"
+"librarystm32\stm32f1xx_hal_flash.o"
+"librarystm32\stm32f1xx_hal_flash_ex.o"
+"librarystm32\stm32f1xx_hal_exti.o"
+"librarystm32\stm32f1xx_hal_tim.o"
+"librarystm32\stm32f1xx_hal_tim_ex.o"
+"librarystm32\stm32f1xx_hal_uart.o"
+"librarystm32\system_stm32f1xx.o"
+--strict --scatter "LibrarySTM32\LibrarySTM32.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "LibrarySTM32.map" -o LibrarySTM32\LibrarySTM32.axf
