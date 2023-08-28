@@ -22,11 +22,21 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <string.h>
+#include "DHT.h"
+#include "stdio.h"
+#include "stdint.h"
+#include <string.h>
  uint8_t text[] ="Hello from Cherry Electronics\n";
 	char smsreciver[100];
 	uint8_t count =0 ;
 	uint8_t check =0;
-
+	uint32_t readResistor1 = 0 ;
+	uint32_t readResistor0 = 0 ;
+	DHT_DataTypedef DHT11_Data;
+	float Temp, Humi;
+	long last = 0;
+	int i =0;
+	
 //Code Thu vien se không mat khi buil cube lai
 
 
@@ -49,6 +59,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+ADC_HandleTypeDef hadc2;
 
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
@@ -58,6 +69,7 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == SW2_Pin) {
+				HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET);
         HAL_UART_Transmit(&huart2,text,sizeof(text),10);
     }
 }
@@ -107,12 +119,43 @@ static void MX_ADC1_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_ADC2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+#ifdef __GNUC__
+	  #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+		#define PUTCHAR_PROTOTYPE int fputc(int ch,FILE *f)
+#endif
+PUTCHAR_PROTOTYPE
+{
+		HAL_UART_Transmit(&huart2,(uint8_t *)&ch,1,0xFFFF);
+		return ch;
+}
+void Read_DataDHT(void);
+void Read_DataDHT (void)
+{
+	DHT_GetData(&DHT11_Data);
+	Temp = DHT11_Data.Temperature;
+	Humi = DHT11_Data.Humidity;
+	last = HAL_GetTick();
+	while(1)
+	{
+		if(HAL_GetTick() - last >= 1200)
+		{
+			
+			printf("Temp: %0.2f - Humi: %0.2f\r\n",i,Temp,Humi);
+			last = HAL_GetTick();
+	
+			break;
+		}
+	}
+}
 
 /* USER CODE END 0 */
 
@@ -148,10 +191,12 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_USART2_UART_Init();
+  MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
 	HAL_TIM_Base_Start_IT(&htim1);
 // Config o day
 	HAL_UART_Receive_IT(&huart2, (uint8_t*)&smsreciver[count], 1);
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -163,20 +208,36 @@ int main(void)
 	HAL_GPIO_WritePin(LED4_GPIO_Port,LED4_Pin,GPIO_PIN_SET);
   while (1)
   {
+		HAL_ADC_Start(&hadc1);
+		HAL_Delay(1500);
+		readResistor1 = HAL_ADC_GetValue(&hadc1)*10000/4096;
+		
+		HAL_ADC_Stop(&hadc1);
+		
+		HAL_ADC_Start(&hadc2);
+		HAL_Delay(1500);
+		readResistor0 = HAL_ADC_GetValue(&hadc2)*100/4096;
+		HAL_ADC_Stop(&hadc2);
+		HAL_UART_Transmit(&huart2,text,sizeof(text),10);
+		printf("Resitor : %d \n",readResistor1);
+		printf("Nhiet do : %d \n",readResistor0);
+		Read_DataDHT();
+		
+		
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 		// viet code o day
-		if(check){
-		strcat(smsreciver,"\n");
-			HAL_UART_Transmit(&huart2,(uint8_t*)smsreciver,strlen(smsreciver),1000);
+		//if(check){
+		//strcat(smsreciver,"\n");
+			//HAL_UART_Transmit(&huart2,(uint8_t*)smsreciver,strlen(smsreciver),1000);
 			
-			check=0;}
+			//check=0;}
 		
-		//HAL_UART_Transmit(&huart2,text,sizeof(text),10);
+	}
   /* USER CODE END 3 */
 }
-}
+
 /**
   * @brief System Clock Configuration
   * @retval None
@@ -266,6 +327,53 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief ADC2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC2_Init(void)
+{
+
+  /* USER CODE BEGIN ADC2_Init 0 */
+
+  /* USER CODE END ADC2_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC2_Init 1 */
+
+  /* USER CODE END ADC2_Init 1 */
+
+  /** Common config
+  */
+  hadc2.Instance = ADC2;
+  hadc2.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc2.Init.ContinuousConvMode = DISABLE;
+  hadc2.Init.DiscontinuousConvMode = DISABLE;
+  hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc2.Init.NbrOfConversion = 1;
+  if (HAL_ADC_Init(&hadc2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_0;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC2_Init 2 */
+
+  /* USER CODE END ADC2_Init 2 */
 
 }
 
@@ -408,17 +516,14 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, Vout_Pin|BUZZER_Pin|EN_Pin|LED3_Pin
-                          |LED2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, BUZZER_Pin|EN_Pin|LED3_Pin|LED2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, RST2_Pin|CE_Pin|LED1_Pin|LED4_Pin
-                          |RST1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, RST2_Pin|CE_Pin|Data_Pin|LED1_Pin
+                          |LED4_Pin|RST1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : Vout_Pin BUZZER_Pin EN_Pin LED3_Pin
-                           LED2_Pin */
-  GPIO_InitStruct.Pin = Vout_Pin|BUZZER_Pin|EN_Pin|LED3_Pin
-                          |LED2_Pin;
+  /*Configure GPIO pins : BUZZER_Pin EN_Pin LED3_Pin LED2_Pin */
+  GPIO_InitStruct.Pin = BUZZER_Pin|EN_Pin|LED3_Pin|LED2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -436,10 +541,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(SW2_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : RST2_Pin CE_Pin LED1_Pin LED4_Pin
-                           RST1_Pin */
-  GPIO_InitStruct.Pin = RST2_Pin|CE_Pin|LED1_Pin|LED4_Pin
-                          |RST1_Pin;
+  /*Configure GPIO pins : RST2_Pin CE_Pin Data_Pin LED1_Pin
+                           LED4_Pin RST1_Pin */
+  GPIO_InitStruct.Pin = RST2_Pin|CE_Pin|Data_Pin|LED1_Pin
+                          |LED4_Pin|RST1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

@@ -20,6 +20,7 @@
 "librarystm32\stm32f1xx_hal_tim_ex.o"
 "librarystm32\stm32f1xx_hal_uart.o"
 "librarystm32\system_stm32f1xx.o"
+"librarystm32\dht.o"
 --strict --scatter "LibrarySTM32\LibrarySTM32.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers

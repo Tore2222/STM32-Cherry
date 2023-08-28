@@ -31,3 +31,5 @@ librarystm32\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 librarystm32\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
 librarystm32\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
 librarystm32\main.o: D:\keilC STM32\app\ARM\ARMCC\Bin\..\include\string.h
+librarystm32\main.o: ..\LIBDHT11\LIBDHT11\DHT.h
+librarystm32\main.o: D:\keilC STM32\app\ARM\ARMCC\Bin\..\include\stdio.h
